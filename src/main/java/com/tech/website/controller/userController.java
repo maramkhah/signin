@@ -1,47 +1,53 @@
 package com.tech.website.controller;
 
 import com.tech.website.pojo.User;
+import com.tech.website.service.IUserServiceImp;
 
-import java.util.ArrayList;
+import jakarta.validation.Valid;
+
 import java.util.List;
 
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
 
-@Controller
-public class userController {
+@RestController
+public class UserController {
 
-    List<User> userList = new ArrayList<>(); 
+
+    @Autowired
+    private IUserServiceImp serviceImp;
     
-    @GetMapping("/")
-    public String getindex(Model model,@RequestParam(required = false)String id){
-        int index = getUserIndex(id);
-        model.addAttribute("user", index ==Constants.NOT_FOUND ? new User():userList.get(index));
-        return "index";
+    @GetMapping(value = "/users")
+    public ResponseEntity<List<User>> getUsers(){
+    List<User> users = serviceImp.getUsers();
+    return new ResponseEntity<>(users,HttpStatus.OK);
     }
 
-    @GetMapping("/users")
-    public String getusers(Model model){
-        model.addAttribute("users", userList);
-        return "users";
-    }
-    
-
-    @PostMapping("/handleSubmit")
-    public String submitForm(User user){
-        System.out.println(user);
-        userList.add(user);
-        return "redirect:/users";
+    @GetMapping(value = "/users/{id}")
+    public ResponseEntity<User> getUser(@PathVariable String id){
+        User user = serviceImp.getUserById(id);
+        return new ResponseEntity<>(user,HttpStatus.OK);
     }
 
-    public int getUserIndex (String id){
-        for(int i=0; i<userList.size();i++){
-            if(userList.get(i).getId().equals(id))return i;
-        }
-        return Constants.NOT_FOUND;
+
+    @PostMapping(value = "/user")
+    public ResponseEntity<User> createUser(@Valid @RequestBody User user){
+        serviceImp.saveUser(user);
+        return new ResponseEntity<>(user,HttpStatus.CREATED);
     }
+
+    @DeleteMapping(value = "/delete/{id}/users")
+    public ResponseEntity<HttpStatus> deleteUser(@PathVariable String id){
+        serviceImp.deleteUser(id);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
 
 }
